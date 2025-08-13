@@ -27,12 +27,13 @@ import { errorApiRef, useApi } from '@backstage/core-plugin-api';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import classNames from 'classnames';
-import { MouseEvent, useEffect, useMemo } from 'react';
+import { MouseEvent, ReactNode, useEffect, useMemo } from 'react';
 import { DefaultRenderLabel } from './DefaultRenderLabel';
 import { DefaultRenderNode } from './DefaultRenderNode';
 import { ALL_RELATION_PAIRS, RelationPairs } from './relations';
 import { Direction, EntityEdge, EntityNode } from './types';
 import { useEntityRelationNodesAndEdges } from './useEntityRelationNodesAndEdges';
+import { line, curveMonotoneX } from 'd3-shape';
 
 /** @public */
 export type EntityRelationsGraphClassKey = 'progress' | 'container' | 'graph';
@@ -91,6 +92,55 @@ export type EntityRelationsGraphProps = {
   renderLabel?: DependencyGraphTypes.RenderLabelFunction<EntityEdge>;
   curve?: 'curveStepBefore' | 'curveMonotoneX';
   showArrowHeads?: boolean;
+};
+
+export const renderEdge = ({
+  edge,
+  id,
+}: {
+  edge: {
+    points: { x: number; y: number }[];
+    label?: string;
+    labeloffset?: number;
+    showArrowHeads?: boolean;
+    relations: string[];
+  };
+  id: { v: string; w: string };
+}): ReactNode => {
+  if (!edge.points || edge.points.length < 2) return null;
+
+  const pathGenerator = line<{ x: number; y: number }>()
+    .x(d => d.x)
+    .y(d => d.y)
+    .curve(curveMonotoneX);
+
+  const pathData = pathGenerator(edge.points);
+
+  const midIndex = Math.floor(edge.points.length / 2);
+  const midPoint = edge.points[midIndex];
+
+  return (
+    <g key={`${id.v}-${id.w}`}>
+      <path
+        d={pathData || ''}
+        fill="none"
+        stroke="red"
+        strokeWidth={2}
+        markerEnd={edge.showArrowHeads ? 'url(#arrowhead)' : undefined}
+      />
+      {edge.label && (
+        <text
+          x={midPoint.x}
+          y={midPoint.y - (edge.labeloffset ?? 10)}
+          textAnchor="middle"
+          fontSize={12}
+          fill="yellow"
+        >
+          {edge.relations.join(' / ')}
+        </text>
+      )}
+    </g>
+  );
 };
 
 /**
@@ -156,6 +206,7 @@ export const EntityRelationsGraph = (props: EntityRelationsGraphProps) => {
           edges={edges}
           renderNode={renderNode || DefaultRenderNode}
           renderLabel={renderLabel || DefaultRenderLabel}
+          renderEdge={renderEdge}
           direction={direction}
           className={classes.graph}
           paddingX={theme.spacing(4)}
