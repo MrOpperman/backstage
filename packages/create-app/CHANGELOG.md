@@ -1,5 +1,19 @@
 # @backstage/create-app
 
+## 0.7.2-next.3
+
+### Patch Changes
+
+- 8b1bf6e: Updated the `app.packages` config setting now that it no longer is experimental
+
+## 0.7.2-next.2
+
+### Patch Changes
+
+- Bumped create-app version.
+- Updated dependencies
+  - @backstage/cli-common@0.1.15
+
 ## 0.7.2-next.1
 
 ### Patch Changes

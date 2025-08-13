@@ -20,28 +20,22 @@ export function createApp(options?: CreateAppOptions): {
 
 // @public
 export interface CreateAppOptions {
-  // (undocumented)
-  bindRoutes?(context: { bind: CreateAppRouteBinder }): void;
-  // (undocumented)
-  configLoader?: () => Promise<{
-    config: ConfigApi;
-  }>;
-  // (undocumented)
-  extensionFactoryMiddleware?:
-    | ExtensionFactoryMiddleware
-    | ExtensionFactoryMiddleware[];
-  // (undocumented)
-  features?: (FrontendFeature | FrontendFeatureLoader)[];
-  // (undocumented)
-  flags?: {
+  advanced?: {
     allowUnknownExtensionConfig?: boolean;
+    configLoader?: () => Promise<{
+      config: ConfigApi;
+    }>;
+    extensionFactoryMiddleware?:
+      | ExtensionFactoryMiddleware
+      | ExtensionFactoryMiddleware[];
+    loadingElement?: ReactNode;
+    pluginInfoResolver?: FrontendPluginInfoResolver;
   };
-  loadingComponent?: ReactNode;
-  // (undocumented)
-  pluginInfoResolver?: FrontendPluginInfoResolver;
+  bindRoutes?(context: { bind: CreateAppRouteBinder }): void;
+  features?: (FrontendFeature | FrontendFeatureLoader)[];
 }
 
-// @public
+// @public @deprecated (undocumented)
 export function createPublicSignInApp(options?: CreateAppOptions): {
   createRoot(): JSX_2;
 };
