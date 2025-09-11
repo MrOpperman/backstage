@@ -156,6 +156,9 @@ export const EntityRelationsGraph = (props: EntityRelationsGraphProps) => {
         <DependencyGraph
           nodes={nodes}
           edges={edges}
+          nodeMargin={100}
+          rankMargin={140}
+          edgeMargin={20}
           renderNode={renderNode || DefaultRenderNode}
           renderLabel={renderLabel || DefaultRenderLabel}
           renderEdge={renderEdge}

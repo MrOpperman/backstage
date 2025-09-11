@@ -420,6 +420,34 @@ export function DependencyGraph<NodeData, EdgeData>(
       viewBox={`0 0 ${maxWidth} ${maxHeight}`}
     >
       <defs>
+
+        <marker
+          id="arrowhead"
+          markerWidth="10"
+          markerHeight="7"
+          refX="10"
+          refY="3.5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path d="M0,0 L10,3.5 L0,7 Z" fill="white" />
+        </marker>
+
+
+        <marker
+          id="arrowheadstart"
+          markerWidth="10"
+          markerHeight="7"
+          refX="10"
+          refY="3.5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+
+          <path d="M0,0 L10,3.5 L0,7 Z" fill="white" transform="rotate(180 5 3.5)" />
+        </marker>
+
+
         <marker
           id={ARROW_MARKER_ID}
           viewBox="0 0 24 24"

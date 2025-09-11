@@ -40,6 +40,7 @@ import {
 } from '../EntityRelationsGraph';
 import { useTranslationRef } from '@backstage/frontend-plugin-api';
 import { catalogGraphTranslationRef } from '../../translation';
+import { line, curveBasis } from 'd3-shape';
 
 /** @public */
 export type CatalogGraphCardClassKey = 'card' | 'graph';
@@ -59,6 +60,119 @@ const useStyles = makeStyles<Theme, { height: number | undefined }>(
   },
   { name: 'PluginCatalogGraphCatalogGraphCard' },
 );
+
+export const renderEdge = ({
+  edge,
+  id,
+}: {
+  edge: {
+    points: { x: number; y: number }[];
+    label?: string;
+    labeloffset?: number; // used as dy for nudging the label up/down the path visually
+    showArrowHeads?: boolean;
+    relations: string[];
+  };
+  id: { v: string; w: string };
+}): ReactNode => {
+  if (!edge.points || edge.points.length < 2) return null;
+
+  // Styling decisions from relations
+  const relationSet = new Set(edge.relations);
+  const isOwner = relationSet.has('ownerOf');
+  const isPart = relationSet.has('hasPart');
+  const isApi = relationSet.has('apiProvidedBy');
+  const isDepends = relationSet.has('dependsOn');
+
+  const strokeDasharray = isPart ? '6,4' : isApi ? '2,2' : undefined;
+  const strokeWidth = isDepends ? 3 : 2;
+  const markerStart = isDepends ? 'url(#arrowheadstart)' : undefined;
+  const markerEnd =
+    edge.showArrowHeads || isOwner || isDepends ? 'url(#arrowhead)' : undefined;
+
+  const pathGenerator = line<{ x: number; y: number }>()
+    .x(d => markerStart ? d.x + 9 : d.x)
+    .y(d => markerStart? d.y - 1: d.y)
+    .curve(curveBasis);
+
+  // Base path for the edge line
+  const pathData = pathGenerator(edge.points) ?? '';
+
+  // Direction helpers (used to decide whether to flip label path)
+  const start = edge.points[0];
+  const end = edge.points[edge.points.length - 1];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+
+  // If the edge primarily goes right->left, reverse the label path so text reads LTR.
+  // (This keeps the text orientation consistent, especially on curved paths.)
+  const shouldFlipLabel = Math.abs(dx) >= Math.abs(dy) ? dx < 0 : dy < 0;
+  const labelPathData = shouldFlipLabel
+    ? pathGenerator([...edge.points].reverse()) ?? ''
+    : pathData;
+
+  // Unique ids for the visible path and the label path
+  const pathId = `edge-path-${CSS.escape(`${id.v}-${id.w}`)}`;
+  const labelPathId = `edge-label-path-${CSS.escape(`${id.v}-${id.w}`)}`;
+
+  // What to render as the label text
+  const labelText =
+    edge.label && edge.label !== 'visible'
+      ? edge.label
+      : edge.relations.join(' / ');
+
+  return (
+    <g key={`${id.v}-${id.w}`}>
+      {/* Visible edge line (with markers) */}
+      <path
+        id={pathId}
+        d={pathData}
+        fill="none"
+        stroke={isApi ? "yellow" : "white"}
+        strokeWidth={strokeWidth}
+        strokeDasharray={strokeDasharray}
+        markerStart={markerStart}
+        markerEnd={markerEnd}
+      />
+
+      {/* Defs-only path for text (optionally reversed for consistent LTR labels) */}
+      <defs>
+        <path id={labelPathId} d={labelPathData} fill="none" />
+      </defs>
+
+      {edge.label === 'visible' || (edge.label && edge.label.length > 0) ? (
+        <>
+          <text
+            fontSize={12}
+            fill="white"
+            stroke="rgba(0,0,0,0.6)"
+            strokeWidth={4}
+            paintOrder="stroke"
+            pointerEvents="none"
+            style={{ userSelect: 'none' }}
+            textAnchor="middle"
+          >
+            <textPath href={`#${labelPathId}`} startOffset="50%">
+              <tspan dy={edge.labeloffset - 15 ?? -15}>{labelText}</tspan>
+            </textPath>
+          </text>
+
+          {/* Foreground text (sharp fill) */}
+          <text
+            fontSize={12}
+            fill="white"
+            pointerEvents="none"
+            style={{ userSelect: 'none' }}
+            textAnchor="middle"
+          >
+            <textPath href={`#${labelPathId}`} startOffset="50%">
+              <tspan dy={edge.labeloffset - 15 ?? -15}>{labelText}</tspan>
+            </textPath>
+          </text>
+        </>
+      ) : null}
+    </g>
+  );
+};
 
 export const CatalogGraphCard = (
   props: Partial<EntityRelationsGraphProps> & {
@@ -142,6 +256,7 @@ export const CatalogGraphCard = (
     >
       <EntityRelationsGraph
         {...props}
+        renderEdge={renderEdge}
         rootEntityNames={rootEntityNames || entityName}
         onNodeClick={onNodeClick || defaultOnNodeClick}
         className={className || classes.graph}

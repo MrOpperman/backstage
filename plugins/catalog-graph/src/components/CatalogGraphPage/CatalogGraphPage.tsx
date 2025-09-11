@@ -52,6 +52,7 @@ import { SwitchFilter } from './SwitchFilter';
 import { useCatalogGraphPage } from './useCatalogGraphPage';
 import { useTranslationRef } from '@backstage/frontend-plugin-api';
 import { catalogGraphTranslationRef } from '../../translation';
+import { renderEdge } from '../CatalogGraphCard/CatalogGraphCard.tsx';
 
 /** @public */
 export type CatalogGraphPageClassKey =
@@ -253,6 +254,7 @@ export const CatalogGraphPage = (
               </Typography>
               <EntityRelationsGraph
                 {...props}
+                renderEdge={renderEdge}
                 rootEntityNames={rootEntityNames}
                 maxDepth={maxDepth}
                 kinds={
